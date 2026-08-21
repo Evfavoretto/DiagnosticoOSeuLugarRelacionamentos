@@ -327,6 +327,12 @@
     @media(max-width:820px){.resultPlaces.three{grid-template-columns:1fr}}
     @media(max-width:720px){.question .options.choiceGrid{grid-template-columns:1fr}}
 
+  
+    /* Correção de interação das alternativas */
+    .choiceOption{position:relative;z-index:1}
+    .choiceOption label{position:relative;z-index:2;pointer-events:auto!important;cursor:pointer!important}
+    .choiceOption input{pointer-events:none}
+
   </style>
 </head>
 
@@ -429,6 +435,32 @@
     const OPPORTUNITIES={"crianca": 13, "fuga": 12, "pai_mae": 10, "desequilibrio": 10, "defesa": 8, "salvador": 8, "distancia": 6};
     const PLACES=["crianca","fuga","pai_mae","desequilibrio","defesa","salvador","distancia"];
 
+    // Referências da interface e controles de estado
+    const form=document.getElementById("quiz");
+    const statusText=document.getElementById("statusText");
+    const resultCard=document.getElementById("resultCard");
+    const btnCopy=document.getElementById("btnCopy");
+    const btnPrint=document.getElementById("btnPrint");
+    const btnWhats=document.getElementById("btnWhats");
+
+    let primeiraRespostaRegistrada=false;
+    let diagnosticoConcluidoRegistrado=false;
+    let whatsappRegistrado=false;
+    let copiaRegistrada=false;
+
+    const yearEl=document.getElementById("year");
+    if(yearEl) yearEl.textContent=new Date().getFullYear();
+
+
+
+    const visualOrders={
+      1:["C","A","D","B"],2:["B","D","A","C"],3:["D","A","C","B"],4:["B","C","D","A"],
+      5:["C","D","A","B"],6:["A","C","B","D"],7:["B","D","C","A"],8:["D","B","A","C"],
+      9:["C","A","D","B"],10:["B","C","D","A"],11:["D","A","B","C"],12:["C","D","B","A"],
+      13:["B","A","D","C"],14:["D","C","A","B"],15:["A","D","C","B"],16:["C","B","D","A"],
+      17:["B","D","A","C"],18:["D","A","C","B"],19:["C","A","B","D"],20:["B","C","A","D"],
+      21:["D","B","C","A"],22:["C","A","D","B"],23:["B","D","A","C"],24:["D","C","B","A"]
+    };
 
     function renderQuestions(){
       form.innerHTML="";
@@ -998,7 +1030,7 @@ Existe diferença entre escolher não conversar agora e sentir que é melhor nun
 
       resultCard.classList.add("visible");
       btnWhats.href="https://wa.me/?text="+encodeURIComponent(buildPlainResult(r));
-      localStorage.setItem("oslDiagnostico24",JSON.stringify(getSelections().arr.map(x=>x.code)));
+
     }
 
     function updateUI(){
@@ -1017,7 +1049,12 @@ Existe diferença entre escolher não conversar agora e sentir que é melhor nun
       }
     }
 
+    // Cada acesso começa como um diagnóstico novo.
+    localStorage.removeItem("oslDiagnostico24");
     renderQuestions();
+    resultCard.classList.remove("visible");
+    statusText.textContent="Para liberar o resultado, responda todas as 24 perguntas.";
+
     form.addEventListener("change",()=>{
       if(!primeiraRespostaRegistrada){
         primeiraRespostaRegistrada=true;
@@ -1041,17 +1078,7 @@ Existe diferença entre escolher não conversar agora e sentir que é melhor nun
       if(!whatsappRegistrado&&typeof trackEvent==="function"){whatsappRegistrado=true;trackEvent("resultado_whatsapp",{});}
     });
 
-    try{
-      const saved=JSON.parse(localStorage.getItem("oslDiagnostico24")||"[]");
-      saved.forEach(c=>{
-        const m=c.match(/^P(\d{2})-([A-D])$/);
-        if(m){
-          const q=Number(m[1]),a=m[2],el=document.getElementById(`q${q}_${a}`);
-          if(el)el.checked=true;
-        }
-      });
-      updateUI();
-    }catch(e){}
+    
   </script>
 </body>
 </html>
