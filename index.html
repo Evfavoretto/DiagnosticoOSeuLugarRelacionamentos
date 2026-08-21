@@ -219,11 +219,23 @@
     .resultCard h3{font-size:clamp(28px,4vw,42px);line-height:1.05;letter-spacing:-1.5px;margin:0 0 18px}
     .resultCard h4{font-size:21px;margin:24px 0 8px}
     .resultCard p{color:var(--muted);font-size:17px;line-height:1.65;margin:0 0 12px;opacity:1}
-    .secondaryResult{background:var(--soft);border-radius:18px;padding:18px;margin:22px 0}
-    .secondaryResult strong{color:var(--red)}
-    .lessonBox{background:linear-gradient(135deg,#211827,#3b2136);color:#fff;border-radius:24px;padding:24px;margin-top:24px}
-    .lessonBox h4{font-size:24px;margin:0 0 10px}
-    .lessonBox p{color:#fff;opacity:.88;margin-bottom:18px}
+    .resultLead{font-size:19px!important;color:var(--dark)!important}
+    .resultPlaces{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:24px 0}
+    .resultPlace{border:1px solid rgba(255,79,184,.25);border-radius:22px;padding:20px;background:#fff}
+    .resultPlace.primary{background:linear-gradient(135deg,var(--red),var(--pink));color:#fff}
+    .resultPlace span{display:block;font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.6px;opacity:.75;margin-bottom:7px}
+    .resultPlace strong{display:block;font-size:22px;line-height:1.15}
+    .resultSection{border-top:1px solid rgba(21,17,29,.09);padding-top:6px;margin-top:26px}
+    .resultSection.highlight{border:0;background:var(--soft);border-radius:22px;padding:22px}
+    .resultSection.dark{border:0;background:linear-gradient(135deg,#211827,#3b2136);color:#fff;border-radius:22px;padding:22px}
+    .resultSection.dark p,.resultSection.dark li{color:#fff!important;opacity:.9}
+    .resultList{padding-left:22px;color:var(--muted);font-size:17px;line-height:1.65}
+    .cycleList{list-style:none;padding:0;counter-reset:cycle}
+    .cycleList li{counter-increment:cycle;position:relative;padding:12px 12px 12px 48px;margin:8px 0;background:#fff;border:1px solid rgba(255,79,184,.18);border-radius:16px;color:var(--dark);line-height:1.45}
+    .cycleList li:before{content:counter(cycle);position:absolute;left:12px;top:10px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(90deg,var(--red),var(--pink));color:#fff;font-weight:900}
+    .reflectionList li{margin-bottom:10px}
+    .resultCode{font-family:monospace;font-size:15px;font-weight:900;background:#f6f3f7;padding:8px 12px;border-radius:10px;display:inline-block}
+    .resultNotice{font-size:14px!important;background:#f7f5f8;padding:16px;border-radius:16px}
 
     .actions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 
@@ -265,6 +277,17 @@
       .option label{min-width:0;width:100%}
       .actions{flex-direction:column;align-items:stretch}
       .btn{width:100%}
+      .resultPlaces{grid-template-columns:1fr}
+    }
+
+    @media print{
+      body{background:#fff}
+      .topbar,.intro,#quiz,.summary,.actions,.footer{display:none!important}
+      .wrap{max-width:900px;padding:0}
+      .final{background:#fff;color:var(--dark);box-shadow:none;padding:0}
+      .final>h2,.final>p{display:none}
+      .resultCard{display:block!important;box-shadow:none;padding:0}
+      .resultSection{break-inside:avoid}
     }
   </style>
 </head>
@@ -326,23 +349,19 @@
 
       <div class="resultCard" id="resultCard" aria-live="polite">
         <div class="resultEyebrow">O seu resultado</div>
-        <h3 id="resultTitle"></h3>
-        <p id="resultIntro"></p>
-        <h4>Como esse lugar aparece no relacionamento</h4>
-        <p id="resultSigns"></p>
-        <h4>A raiz desse movimento</h4>
-        <p id="resultRoot"></p>
-        <h4>O primeiro movimento para sair desse lugar</h4>
-        <p id="resultStep"></p>
-        <div class="secondaryResult" id="secondaryResult"></div>
-        <div class="lessonBox">
-          <h4>Eu preparei uma aula para você</h4>
-          <p id="lessonText"></p>
-          <a class="btn btn-primary" id="btnLesson" href="#" target="_blank" rel="noopener">Clique aqui para assistir à aula</a>
+        <h3>Os dois lugares emocionais presentes no seu relacionamento</h3>
+        <p class="resultLead">O primeiro mostra o movimento que aparece com mais força. O segundo revela como você tenta se proteger, buscar segurança ou manter a relação.</p>
+        <div class="resultPlaces">
+          <div class="resultPlace primary"><span>Lugar principal</span><strong id="primaryPlace"></strong></div>
+          <div class="resultPlace"><span>Segundo lugar</span><strong id="secondaryPlace"></strong></div>
         </div>
+        <p>Código do resultado: <span class="resultCode" id="resultCode"></span></p>
+        <div id="fullResult"></div>
         <div class="actions" style="margin-top:22px">
           <button type="button" class="btn btn-secondary" id="btnCopy">Copiar resultado</button>
+          <button type="button" class="btn btn-secondary" id="btnPrint">Imprimir ou salvar em PDF</button>
           <a class="btn btn-secondary" id="btnWhats" href="#">Enviar meu resultado para o WhatsApp</a>
+          <button type="button" class="btn btn-secondary" id="btnReset">Refazer diagnóstico</button>
         </div>
       </div>
     </section>
@@ -355,13 +374,6 @@
 
   <script>
     const WHATS_NUMBER = "5549998110445";
-
-    // Cole o link de cada aula entre as aspas correspondentes.
-    const LESSON_URLS = {
-      "Distância silenciosa": "", "Defesa e reatividade": "", "Desequilíbrio de troca": "",
-      "Pai ou mãe do parceiro": "", "Salvador(a)": "", "Fuga": "", "Lugar de criança": "",
-      "Nenhum lugar predominante": ""
-    };
 
     const RESULT_CONTENT = {
       "Distância silenciosa": {
@@ -420,6 +432,148 @@
         step: "O primeiro movimento é preservar o encontro entre dois adultos: falar com clareza, escutar com presença e não assumir aquilo que pertence ao outro.",
         lesson: "Nesta aula, eu vou mostrar como fortalecer o lugar de adulto e preservar uma relação mais consciente."
       }
+    };
+
+    const PLACE_DETAILS = {
+      "Distância silenciosa": {
+        feeling:"Você sente falta do relacionamento mesmo continuando dentro dele. A dor não está apenas na redução do carinho ou das conversas, mas em perceber que ainda sente falta de ser procurado enquanto o outro parece ter se acostumado com a distância.",
+        formation:"Esse lugar se forma nos pequenos encontros que vão sendo adiados: uma conversa deixada para depois, uma necessidade não comunicada, uma mágoa engolida e uma tentativa de aproximação que não encontra resposta. Aos poucos, a relação aprende a funcionar sem que o casal realmente se encontre.",
+        partner:"O parceiro pode perceber seu movimento como frieza ou falta de interesse. Ele enxerga o afastamento atual, mas nem sempre vê as tentativas, as decepções e as necessidades que vieram antes dele.",
+        trying:"Você não criou essa distância porque queria perder a relação. Criou distância para não continuar se machucando da mesma maneira. A proteção reduz a decepção, mas também impede a proximidade que você deseja.",
+        costs:["Perda de admiração e curiosidade pelo outro","Diminuição do carinho espontâneo e da intimidade","Sensação de solidão mesmo estando acompanhado","Normalização de uma vida em que o casal apenas funciona"],
+        notHelp:["Parar de procurar para testar se o outro sentirá falta","Esperar que o parceiro perceba sozinho","Responder com frieza porque recebeu frieza","Guardar tudo até falar no limite"],
+        questions:["Em que momento você percebeu que começou a desistir de procurar ou conversar?","O que gostaria de receber, mas parou de pedir porque se cansou?","Existe disposição dos dois para reconstruir essa conexão?"],
+        trigger:"Você percebe que a presença, o carinho e o encontro entre vocês diminuíram",
+        consequence:"você reduz suas expectativas e sua presença emocional",
+        partnerReaction:"o parceiro percebe afastamento, mas não compreende o que aconteceu antes dele"
+      },
+      "Defesa e reatividade": {
+        feeling:"Você entra em algumas conversas já esperando que terminem mal. Sente que precisa se explicar para não ser culpado, provar sua intenção ou mostrar que também existe uma parte do outro no problema.",
+        formation:"Esse lugar se fortalece quando conversas anteriores produziram julgamento, rejeição ou falta de compreensão. O corpo começa a reconhecer o diálogo como ameaça e reage antes que você consiga escutar tudo.",
+        partner:"O parceiro pode perceber suas explicações como falta de responsabilidade. Você tenta mostrar seu lado; ele sente que a dor dele foi ignorada e aumenta a intensidade para conseguir ser ouvido.",
+        trying:"Você não reage porque gosta de discutir. Reage porque não quer ocupar o lugar de errado, insuficiente ou culpado por tudo. Ao proteger seu valor, porém, perde a capacidade de acolher a experiência do outro.",
+        costs:["Medo de iniciar conversas importantes","Assuntos evitados ou discutidos sem conclusão","Carinho que demora a retornar depois dos conflitos","Perda de segurança emocional"],
+        notHelp:["Responder antes de o outro terminar","Explicar a intenção sem reconhecer o impacto","Trazer os erros do parceiro para equilibrar a culpa","Tentar resolver enquanto os dois estão emocionalmente ativados"],
+        questions:["O que você teme que aconteça se não se defender imediatamente?","Em quais assuntos já entra esperando ser criticado?","Consegue acolher o sentimento do outro antes de explicar sua intenção?"],
+        trigger:"Uma insatisfação é apresentada e você sente que seu valor ou sua intenção estão sendo questionados",
+        consequence:"você se protege explicando, justificando, rebatendo ou atacando",
+        partnerReaction:"o parceiro sente que não foi acolhido e aumenta a cobrança"
+      },
+      "Desequilíbrio de troca": {
+        feeling:"Você sente que está sozinho sustentando a aproximação, as conversas, as responsabilidades e o cuidado com o vínculo. Aquilo que começou como entrega vai se transformando em cansaço e ressentimento.",
+        formation:"O desequilíbrio cresce cada vez que você percebe uma necessidade e assume antes que o outro participe. A vida continua funcionando, mas você se torna cada vez mais responsável e o parceiro, cada vez menos convocado a ocupar a parte dele.",
+        partner:"Como você resolve antes de pedir ajuda e esconde o custo daquilo que faz, o parceiro pode acreditar que está tudo bem. Quando você finalmente fala, ele escuta a cobrança, mas não acompanhou todo o processo de esgotamento.",
+        trying:"Você assumiu mais porque queria segurança, cuidado e continuidade. Sua entrega tenta garantir que a relação funcione, mas também esconde sua necessidade de ser cuidado da forma como cuida.",
+        costs:["Cansaço emocional e sensação de injustiça","Perda de admiração pelo parceiro","Cobranças, controle e ressentimento","Diminuição do desejo e da leveza"],
+        notHelp:["Fazer tudo sem pedir participação","Esperar que o outro adivinhe sua necessidade","Ceder e depois cobrar aquilo que não comunicou","Rejeitar ajuda porque o outro faz de forma diferente"],
+        questions:["O que continua fazendo porque acredita que, se parar, tudo desmoronará?","O que espera receber, mas ainda não pediu claramente?","Onde sua ajuda impede que o parceiro assuma a própria parte?"],
+        trigger:"Você percebe mais uma necessidade ou responsabilidade sem participação suficiente do parceiro",
+        consequence:"você assume para garantir que tudo continue funcionando",
+        partnerReaction:"o parceiro se acostuma com você resolvendo e participa cada vez menos"
+      },
+      "Pai ou mãe do parceiro": {
+        feeling:"Você sente que precisa lembrar, orientar, corrigir, decidir ou supervisionar. Não queria controlar; queria sentir que existe outro adulto ao seu lado capaz de perceber e assumir sem depender da sua condução.",
+        formation:"Esse lugar começa quando você compensa uma ausência do outro. Cada vez que ocupa o espaço vazio, a situação imediata é resolvida, mas a relação aprende que você conduz e o parceiro espera, resiste ou se acomoda.",
+        partner:"O parceiro pode escutar seu cuidado como falta de confiança: como se não fosse capaz de decidir ou fazer corretamente. Diante disso, pode tornar-se dependente, esconder erros ou resistir às suas orientações.",
+        trying:"Você controla porque busca organização, estabilidade e segurança. O problema é que, ao impedir que as coisas deem errado, também retira do outro a oportunidade de desenvolver responsabilidade.",
+        costs:["Cansaço por precisar acompanhar tudo","Perda de igualdade e admiração","Comunicação marcada por correção e resistência","Diminuição do desejo e da parceria"],
+        notHelp:["Fazer pelo outro porque é mais rápido","Corrigir imediatamente a maneira como ele faz","Resolver para impedir consequências","Pedir autonomia sem permitir uma forma diferente da sua"],
+        questions:["Quais responsabilidades do parceiro você assumiu?","O que teme que aconteça se deixar de controlar?","Você permite que o outro faça de uma forma diferente da sua?"],
+        trigger:"O parceiro não age da forma ou no tempo que você considera necessário",
+        consequence:"você orienta, cobra, supervisiona ou assume",
+        partnerReaction:"o parceiro se sente diminuído e reage com dependência ou resistência"
+      },
+      "Salvador(a)": {
+        feeling:"Você sente que não pode baixar a guarda. Percebe o sofrimento do parceiro e tenta aliviar, resolver ou impedir consequências, mesmo quando já está cansado e também precisaria ser cuidado.",
+        formation:"Esse lugar se forma quando ajudar deixa de ser escolha e vira responsabilidade emocional. Você aprende que ser útil, forte e disponível preserva os vínculos e começa a confundir amor com resgate.",
+        partner:"Como você sempre encontra uma saída, o parceiro pode deixar de procurar a própria. Ele recebe alívio, mas não desenvolve responsabilidade; você se sente pouco reconhecido e ele pode sentir que está em dívida.",
+        trying:"Você tenta evitar dor, perda e sofrimento. Salvar oferece sensação de controle diante da impotência, mas faz você viver um processo que somente o outro poderia assumir.",
+        costs:["Responsabilidade pelo estado emocional do parceiro","Limites cada vez mais frágeis","Dependência e desequilíbrio na relação","Cansaço, culpa e vontade de abandonar tudo"],
+        notHelp:["Resolver antes que o parceiro peça ajuda","Justificar continuamente os comportamentos dele","Proteger o outro das consequências","Acreditar que colocar limites significa abandonar"],
+        questions:["Em quais situações sente que precisa salvar o parceiro?","O que teme que aconteça se começar a colocar limites?","Sua ajuda fortalece ou substitui o outro?"],
+        trigger:"O parceiro enfrenta uma dificuldade, dor ou consequência",
+        consequence:"você se antecipa, protege, resolve ou assume",
+        partnerReaction:"o parceiro recebe alívio e tem menos necessidade de desenvolver a própria resposta"
+      },
+      "Fuga": {
+        feeling:"Você sente que conversar não adiantará ou produzirá mais dor. O silêncio oferece alívio imediato, mas depois deixa você sozinho com sentimentos e necessidades que não conseguiu expressar.",
+        formation:"A Fuga se forma quando tentativas anteriores de comunicação terminaram em discussão, julgamento ou invalidação. Seu corpo aprende que se afastar é mais seguro do que permanecer diante do desconforto.",
+        partner:"O parceiro pode interpretar sua pausa como frieza, indiferença ou abandono. Quanto mais ele pressiona por uma resposta, mais você sente necessidade de desaparecer emocionalmente.",
+        trying:"Você foge porque sente muito e teme piorar a situação, perder o controle ou ouvir uma verdade dolorosa. A intenção é preservar a relação, mas o silêncio produz distância e insegurança.",
+        costs:["Assuntos importantes sem conclusão","Mágoas e tensão acumuladas","Perda de confiança e intimidade","Um parceiro que desiste de tentar conversar"],
+        notHelp:["Dizer que está tudo bem quando não está","Pedir tempo sem combinar a retomada","Usar o silêncio como punição","Esperar que o tempo resolva aquilo que precisa ser comunicado"],
+        questions:["O que acredita que acontecerá se disser claramente o que sente?","Quais assuntos continuam conduzindo a relação porque nunca foram concluídos?","Quando pede uma pausa, realmente retoma a conversa?"],
+        trigger:"Uma conversa ou situação desperta desconforto, medo ou tensão",
+        consequence:"você se cala, adia, muda de assunto ou se afasta",
+        partnerReaction:"o parceiro sente abandono ou pressiona por uma resposta"
+      },
+      "Lugar de criança": {
+        feeling:"Mudanças pequenas no comportamento do parceiro despertam grandes inseguranças. Você procura confirmações para recuperar a sensação de que ainda é amado, escolhido e importante.",
+        formation:"Esse lugar começa antes da relação atual, quando amor, presença ou reconhecimento não foram sentidos com segurança. Você aprende a agradar, adaptar-se ou cuidar para preservar vínculos.",
+        partner:"O parceiro pode sentir que nenhuma demonstração é suficiente. Ao perceber cobrança, vigilância ou necessidade constante de confirmação, ele pode se afastar e confirmar justamente o medo que você carregava.",
+        trying:"Você tenta recuperar segurança. Sua cobrança pede importância; seu ciúme teme substituição; sua dificuldade de colocar limites teme que posicionamento signifique perda de amor.",
+        costs:["Segurança dependente do comportamento do parceiro","Limites enfraquecidos pelo medo","Ciúme, vigilância e necessidade de confirmação","Abandono de si para não perder o outro"],
+        notHelp:["Testar o amor do parceiro","Afastar-se para ver se ele procura","Interpretar silêncio como rejeição","Aceitar desrespeito por medo de ficar sozinho"],
+        questions:["Quais atitudes despertam um medo maior do que a situação explica?","O que modifica em si para evitar perder a relação?","Consegue comunicar uma necessidade sem exigir uma prova de amor?"],
+        trigger:"Uma mudança, distância ou crítica desperta medo de rejeição ou abandono",
+        consequence:"você busca confirmação, adapta-se ou reage a partir da insegurança",
+        partnerReaction:"o parceiro sente pressão e pode se afastar para recuperar espaço"
+      }
+    };
+
+    const SECONDARY_CONTENT = {
+      "Distância silenciosa":"Depois de tentar, conversar, cuidar ou evitar conflitos, você começa a diminuir sua presença emocional. Não significa que deixou de amar; significa que está reduzindo expectativas para não se decepcionar novamente.",
+      "Defesa e reatividade":"Diante do movimento principal, você também se sente criticado ou injustiçado. Tenta proteger sua intenção e seu valor, mas a defesa transforma o diálogo em disputa.",
+      "Desequilíbrio de troca":"Existe a sensação de que a responsabilidade pela aproximação, pela conversa ou pela sustentação da relação está concentrada em você. Quanto mais assume, mais cansado e ressentido fica.",
+      "Pai ou mãe do parceiro":"Você tenta resolver o movimento principal orientando, corrigindo ou assumindo responsabilidades pelo outro. Deseja um parceiro, mas passa a tratá-lo como alguém que precisa ser conduzido.",
+      "Salvador(a)":"Você tenta resolver o movimento principal oferecendo mais apoio, compreensão e cuidado. Ao assumir o que pertence ao outro, sobrecarrega-se e impede que ele desenvolva a própria responsabilidade.",
+      "Fuga":"Você prefere se calar, afastar-se ou adiar o que precisa ser conversado. O silêncio oferece alívio momentâneo, mas deixa a necessidade sem resposta e o problema sem direção.",
+      "Lugar de criança":"O movimento principal desperta medos antigos de rejeição, abandono ou falta de amor. Você procura no parceiro a confirmação necessária para recuperar segurança."
+    };
+
+    const PAIR_INSIGHT = {
+      "Distância silenciosa|Defesa e reatividade":"Vocês foram se afastando porque conversar deixou de produzir compreensão e começou a produzir proteção. A Defesa impede a conversa que poderia interromper a Distância.",
+      "Distância silenciosa|Desequilíbrio de troca":"Você diminui sua presença porque sente que os movimentos de aproximação partem quase sempre do mesmo lado. O cansaço da troca desigual produz afastamento.",
+      "Distância silenciosa|Pai ou mãe do parceiro":"A distância cresce porque você deixou de enxergar apenas um parceiro e passou a perceber alguém que precisa ser orientado. Sem igualdade e admiração, carinho e desejo diminuem.",
+      "Distância silenciosa|Salvador(a)":"Você cuidou tanto das necessidades do outro que desapareceu emocionalmente da relação. Tornou-se importante para resolver, mas deixou de se sentir visto como parceiro.",
+      "Distância silenciosa|Fuga":"Você evita conversar para não gerar conflito, mas tudo o que não é falado permanece entre vocês. A Fuga é o movimento que constrói e mantém a Distância.",
+      "Distância silenciosa|Lugar de criança":"A distância atual desperta medos antigos de rejeição e abandono. Você deseja se aproximar, mas teme procurar e não ser correspondido.",
+      "Defesa e reatividade|Distância silenciosa":"As conversas defensivas já estão produzindo afastamento. Depois de cada conflito, o assunto termina, mas o carinho e a segurança demoram a retornar.",
+      "Defesa e reatividade|Desequilíbrio de troca":"Por trás das discussões existe cansaço por carregar mais. A troca desigual fornece a carga emocional que alimenta sua reatividade.",
+      "Defesa e reatividade|Pai ou mãe do parceiro":"A relação entrou numa dinâmica de correção e resistência: um tenta ensinar ou cobrar; o outro reage por sentir-se diminuído.",
+      "Defesa e reatividade|Salvador(a)":"Você oferece muito e reage quando seu esforço não é reconhecido. A reatividade aparece depois de cuidar além do que conseguia sustentar.",
+      "Defesa e reatividade|Fuga":"Você oscila entre reagir e desaparecer. A Defesa inicia ou intensifica o conflito, e a Fuga impede que ele seja reparado.",
+      "Defesa e reatividade|Lugar de criança":"Sua defesa protege uma parte que teme ser rejeitada, abandonada ou considerada insuficiente. A fala atual alcança dores anteriores.",
+      "Desequilíbrio de troca|Distância silenciosa":"Você se cansou de oferecer e começou a diminuir sua presença. A Distância é consequência do cansaço de viver uma troca desigual.",
+      "Desequilíbrio de troca|Defesa e reatividade":"A sensação de carregar mais já se transformou em irritação. A Defesa é a forma que o cansaço encontra para finalmente aparecer.",
+      "Desequilíbrio de troca|Pai ou mãe do parceiro":"Você carrega mais porque não confia que o parceiro assumirá. Pede participação, mas continua supervisionando ou ocupando o espaço dele.",
+      "Desequilíbrio de troca|Salvador(a)":"Você oferece mais porque sente que o parceiro precisa de você. O Salvador faz você continuar entregando mesmo depois de reconhecer o desequilíbrio.",
+      "Desequilíbrio de troca|Fuga":"Você percebe a desigualdade, mas evita falar claramente. A Fuga impede que limites e responsabilidades sejam reorganizados.",
+      "Desequilíbrio de troca|Lugar de criança":"Você entrega mais porque teme que limites ou negativas coloquem o amor em risco. A entrega se torna uma tentativa de garantir permanência.",
+      "Pai ou mãe do parceiro|Distância silenciosa":"Você assumiu tantas responsabilidades e correções que deixou de se sentir acompanhado. A Distância é consequência de uma relação que perdeu igualdade.",
+      "Pai ou mãe do parceiro|Defesa e reatividade":"Você cobra porque o parceiro não assume; ele se defende porque se sente controlado. Os dois ficam presos entre comando e resistência.",
+      "Pai ou mãe do parceiro|Desequilíbrio de troca":"Você assume porque não confia e depois se ressente porque tudo depende de você. A posição parental mantém a troca desigual.",
+      "Pai ou mãe do parceiro|Salvador(a)":"Você conduz e controla porque deseja proteger. O Salvador oferece uma justificativa afetiva para a posição parental.",
+      "Pai ou mãe do parceiro|Fuga":"Você evita mostrar medo ou vulnerabilidade e fala apenas sobre erros e tarefas. O controle ocupa o lugar do sentimento que não foi comunicado.",
+      "Pai ou mãe do parceiro|Lugar de criança":"Embora pareça ocupar uma posição forte, seu controle protege uma parte insegura que teme abandono, instabilidade ou desorganização.",
+      "Salvador(a)|Distância silenciosa":"Você passou tanto tempo sustentando o parceiro que foi desaparecendo emocionalmente. A Distância nasce do abandono das próprias necessidades.",
+      "Salvador(a)|Defesa e reatividade":"Você cuida e compreende, mas reage quando seu esforço não é reconhecido. A defesa é o grito de quem ultrapassou os próprios limites.",
+      "Salvador(a)|Desequilíbrio de troca":"O cuidado deixou de ser escolha e virou obrigação emocional. O Salvador cria troca desigual ao oferecer mais do que consegue sustentar.",
+      "Salvador(a)|Pai ou mãe do parceiro":"Sua ajuda começou a se transformar em orientação e controle. Você protege, mas também tenta garantir que o resgate aconteça do seu modo.",
+      "Salvador(a)|Fuga":"Você se ocupa cuidando do outro para evitar contato com suas próprias dores. O cuidado vira uma forma de não precisar falar de si.",
+      "Salvador(a)|Lugar de criança":"Você se torna necessário para sentir que possui um lugar garantido. Salvar vira uma tentativa de merecer amor e pertencimento.",
+      "Fuga|Distância silenciosa":"Evitar conversas já produziu afastamento. O silêncio deixou de ser apenas uma reação e passou a organizar a convivência.",
+      "Fuga|Defesa e reatividade":"Você evita porque espera ataque ou julgamento. Quando pressionado, reage, e a discussão confirma que conversar não é seguro.",
+      "Fuga|Desequilíbrio de troca":"Você percebe que carrega mais, mas evita conversar. Seus limites não chegam ao outro e o desequilíbrio permanece.",
+      "Fuga|Pai ou mãe do parceiro":"Você evita mostrar vulnerabilidade e tenta resolver o desconforto corrigindo o parceiro. O controle substitui a necessidade real.",
+      "Fuga|Salvador(a)":"Você se concentra nos problemas do parceiro para evitar falar de si. O Salvador oferece uma ocupação para manter sua dor escondida.",
+      "Fuga|Lugar de criança":"Você se afasta porque teme uma resposta dolorosa. A Fuga protege a Criança da rejeição, mas impede que conheça a realidade.",
+      "Lugar de criança|Distância silenciosa":"O medo de rejeição faz você diminuir sua presença para não se sentir vulnerável. O teste silencioso cria a distância que você temia.",
+      "Lugar de criança|Defesa e reatividade":"Você reage quando sente que seu valor ou o amor estão ameaçados. A Defesa protege a Criança da sensação de insuficiência.",
+      "Lugar de criança|Desequilíbrio de troca":"Você oferece e se adapta para garantir amor. O Desequilíbrio nasce da tentativa de merecer vínculo por meio da entrega.",
+      "Lugar de criança|Pai ou mãe do parceiro":"Você alterna insegurança e controle. A posição parental tenta controlar aquilo que a Criança teme perder.",
+      "Lugar de criança|Salvador(a)":"Você se torna indispensável para sentir que tem lugar na vida do parceiro. Utilidade e amor começam a se confundir.",
+      "Lugar de criança|Fuga":"Quando sente medo, você se fecha e cria respostas sozinho. A Fuga impede que a necessidade seja comunicada e acolhida."
     };
 
     let primeiraRespostaRegistrada = false;
@@ -507,9 +661,10 @@
 
     const btnWhats = document.getElementById("btnWhats");
     const btnCopy = document.getElementById("btnCopy");
+    const btnPrint = document.getElementById("btnPrint");
+    const btnReset = document.getElementById("btnReset");
     const statusText = document.getElementById("statusText");
     const resultCard = document.getElementById("resultCard");
-    const btnLesson = document.getElementById("btnLesson");
     document.getElementById("year").textContent = new Date().getFullYear();
 
     function getAnswers(){
@@ -578,37 +733,101 @@ O segundo lugar que apareceu foi: ${dominant.secundario} (${dominant.secundarioP
 Quero aprofundar a compreensão do meu resultado.`;
     }
 
+    function getResultCode(){
+      const raw = getAnswers().answers.join("|");
+      let hash = 2166136261;
+      for(let i=0;i<raw.length;i++){
+        hash ^= raw.charCodeAt(i);
+        hash = Math.imul(hash,16777619);
+      }
+      return "OSL-" + (hash >>> 0).toString(36).toUpperCase().padStart(7,"0").slice(0,7);
+    }
+
+    function listHTML(items,className){
+      const cls = className || "resultList";
+      return '<ul class="' + cls + '">' + items.map(item => "<li>" + item + "</li>").join("") + "</ul>";
+    }
+
+    function combinationCycle(primary,secondary){
+      const p = PLACE_DETAILS[primary];
+      const s = PLACE_DETAILS[secondary];
+      return [
+        p.trigger,
+        s.consequence,
+        s.partnerReaction,
+        p.consequence,
+        p.partnerReaction,
+        "A reação dos dois reforça os mesmos lugares emocionais e o ciclo recomeça"
+      ];
+    }
+
+    function buildPlainResult(){
+      const d = getDominantPlace();
+      const main = RESULT_CONTENT[d.principal];
+      const detail = PLACE_DETAILS[d.principal];
+      const pair = PAIR_INSIGHT[d.principal + "|" + d.secundario] || "";
+      return "DIAGNÓSTICO O SEU LUGAR®\n\nCódigo: " + getResultCode() +
+        "\nLugar principal: " + d.principal +
+        "\nSegundo lugar: " + (d.secundario || "Nenhum lugar secundário") +
+        "\n\n" + main.intro +
+        "\n\nO que você sente:\n" + (detail ? detail.feeling : main.signs) +
+        "\n\nA raiz desse movimento:\n" + main.root +
+        "\n\nComo os dois lugares funcionam juntos:\n" + pair +
+        "\n\nPrimeiro movimento:\n" + main.step;
+    }
+
     function renderResult(){
       const dominant = getDominantPlace();
       const content = RESULT_CONTENT[dominant.principal];
       if(!content) return;
+      const detail = PLACE_DETAILS[dominant.principal];
+      const hasSecondary = Boolean(dominant.secundario && dominant.secundarioPontuacao > 0);
+      const secondaryName = hasSecondary ? dominant.secundario : "Nenhum lugar secundário predominante";
+      const pairInsight = PAIR_INSIGHT[dominant.principal + "|" + dominant.secundario] ||
+        "Os demais lugares apareceram com pouca força. Seu resultado está concentrado no movimento principal.";
 
-      document.getElementById("resultTitle").textContent = `O lugar que apareceu com mais força foi: ${dominant.principal}`;
-      document.getElementById("resultIntro").textContent = content.intro;
-      document.getElementById("resultSigns").textContent = content.signs;
-      document.getElementById("resultRoot").textContent = content.root;
-      document.getElementById("resultStep").textContent = content.step;
-      document.getElementById("lessonText").textContent = content.lesson;
+      document.getElementById("primaryPlace").textContent = dominant.principal;
+      document.getElementById("secondaryPlace").textContent = secondaryName;
+      document.getElementById("resultCode").textContent = getResultCode();
 
-      const secondary = document.getElementById("secondaryResult");
-      if(dominant.secundarioPontuacao > 0){
-        const tieText = dominant.secundarioPontuacao === dominant.principalPontuacao
-          ? " apareceu com a mesma pontuação e também precisa ser olhado."
-          : " também apareceu no seu resultado e influencia a forma como você vive a relação.";
-        secondary.innerHTML = `<strong>Outro lugar presente:</strong> ${dominant.secundario}.${tieText}`;
-        secondary.style.display = "block";
+      if(!detail){
+        document.getElementById("fullResult").innerHTML =
+          '<div class="resultSection"><h4>O que seu resultado mostra</h4><p>' + content.intro + '</p><p>' + content.signs + '</p></div>' +
+          '<div class="resultSection highlight"><h4>Primeiro movimento</h4><p>' + content.step + '</p></div>';
       } else {
-        secondary.style.display = "none";
-      }
+        const secondaryText = hasSecondary ? SECONDARY_CONTENT[dominant.secundario] :
+          "Nenhum segundo lugar apareceu com força suficiente para compor o resultado.";
+        const cycle = hasSecondary ? combinationCycle(dominant.principal,dominant.secundario) :
+          [detail.trigger,detail.consequence,detail.partnerReaction,"O movimento principal se fortalece e volta a se repetir"];
+        const tieNote = hasSecondary && dominant.secundarioPontuacao === dominant.principalPontuacao
+          ? '<p><strong>Importante:</strong> os dois lugares receberam a mesma pontuação. A ordem organiza a leitura, mas ambos possuem força equivalente no seu resultado.</p>'
+          : "";
 
-      const lessonUrl = LESSON_URLS[dominant.principal];
-      btnLesson.href = lessonUrl || "#";
-      btnLesson.textContent = lessonUrl ? "Clique aqui para assistir à aula" : "Aula disponível em breve";
-      btnLesson.style.opacity = lessonUrl ? "1" : ".65";
-      btnLesson.style.pointerEvents = lessonUrl ? "auto" : "none";
+        document.getElementById("fullResult").innerHTML = tieNote +
+          '<div class="resultSection"><h4>Seu lugar emocional principal</h4><p>' + content.intro + '</p></div>' +
+          '<div class="resultSection"><h4>O que você sente vivendo desse lugar</h4><p>' + detail.feeling + '</p></div>' +
+          '<div class="resultSection"><h4>Como isso aparece no relacionamento</h4><p>' + content.signs + '</p></div>' +
+          '<div class="resultSection"><h4>Como esse lugar foi se formando</h4><p>' + detail.formation + '</p></div>' +
+          '<div class="resultSection"><h4>A raiz desse movimento</h4><p>' + content.root + '</p></div>' +
+          '<div class="resultSection"><h4>Como o parceiro pode perceber você</h4><p>' + detail.partner + '</p></div>' +
+          '<div class="resultSection dark"><h4>O que você está tentando resolver</h4><p>' + detail.trying + '</p></div>' +
+          '<div class="resultSection"><h4>O preço de continuar nesse lugar</h4>' + listHTML(detail.costs) + '</div>' +
+          '<div class="resultSection"><h4>O que não ajuda a resolver</h4>' + listHTML(detail.notHelp) + '</div>' +
+          '<div class="resultSection highlight"><h4>O segundo lugar presente no seu resultado: ' + secondaryName + '</h4><p>' + secondaryText + '</p></div>' +
+          '<div class="resultSection dark"><h4>Como os dois lugares funcionam juntos</h4><p><strong>' + dominant.principal + ' + ' + secondaryName + '</strong></p><p>' + pairInsight + '</p></div>' +
+          '<div class="resultSection"><h4>O ciclo que se repete entre vocês</h4>' + listHTML(cycle,"cycleList") + '</div>' +
+          '<div class="resultSection highlight"><h4>O primeiro movimento de reorganização</h4><p>' + content.step + '</p>' +
+          (hasSecondary ? '<p>Esse movimento também exige reconhecer como o Lugar de ' + dominant.secundario + ' participa do ciclo, para não tentar mudar o resultado principal repetindo a mesma proteção.</p>' : "") + '</div>' +
+          '<div class="resultSection"><h4>Perguntas para você observar</h4>' + listHTML(detail.questions,"resultList reflectionList") + '</div>' +
+          '<div class="resultSection"><p class="resultNotice">Este resultado não determina o futuro do seu relacionamento e não procura apontar culpados. Ele mostra o lugar emocional de onde você está se relacionando hoje. Quando reconhece esse lugar, você deixa de reagir apenas ao comportamento do outro e começa a compreender aquilo que também acontece dentro de você.</p></div>' +
+          '<div class="resultSection dark"><h4>Agora você consegue enxergar o que antes acontecia sem nome</h4><p>O lugar principal mostra onde você está. O segundo lugar mostra o que mantém esse movimento. A combinação dos dois revela o ciclo que precisa ser interrompido.</p><p>Clareza não resolve tudo sozinha, mas muda o ponto de onde você começa.</p></div>';
+      }
 
       resultCard.classList.add("visible");
       btnWhats.href = `https://wa.me/${WHATS_NUMBER}?text=${encodeURIComponent(buildMessage())}`;
+      localStorage.setItem("oslDiagnosticoRespostas",JSON.stringify(
+        Array.from({length:28},(_,i)=>form.querySelector(`input[name="q${i+1}"]:checked`)?.value || "")
+      ));
     }
 
     function updateUI(){
@@ -679,15 +898,6 @@ Quero aprofundar a compreensão do meu resultado.`;
       }
     });
 
-    btnLesson.addEventListener("click", () => {
-      const dominant = getDominantPlace();
-      trackEvent("aula_resultado_clicada", {
-        lugar_principal: dominant.principal,
-        lugar_principal_pontuacao: dominant.principalPontuacao,
-        page_title: "Diagnóstico Relacionamentos Conscientes"
-      });
-    });
-
     btnCopy.addEventListener("click", async () => {
       const { miss } = getAnswers();
 
@@ -697,7 +907,7 @@ Quero aprofundar a compreensão do meu resultado.`;
       }
 
       try{
-        await navigator.clipboard.writeText(buildMessage());
+        await navigator.clipboard.writeText(buildPlainResult());
 
         if(!copiaRegistrada){
           copiaRegistrada = true;
@@ -720,6 +930,34 @@ Quero aprofundar a compreensão do meu resultado.`;
         alert("Não consegui copiar automaticamente. Use o botão do WhatsApp.");
       }
     });
+
+    btnPrint.addEventListener("click", () => {
+      trackEvent("diagnostico_resultado_impresso", {
+        lugar_principal:getDominantPlace().principal,
+        lugar_secundario:getDominantPlace().secundario
+      });
+      window.print();
+    });
+
+    btnReset.addEventListener("click", () => {
+      if(!confirm("Deseja apagar estas respostas e refazer o diagnóstico?")) return;
+      localStorage.removeItem("oslDiagnosticoRespostas");
+      form.reset();
+      resultCard.classList.remove("visible");
+      diagnosticoConcluidoRegistrado = false;
+      statusText.textContent = "Para liberar o resultado, responda todas as perguntas. Faltam: 28";
+      window.scrollTo({top:document.getElementById("quiz").offsetTop - 20,behavior:"smooth"});
+    });
+
+    try{
+      const saved = JSON.parse(localStorage.getItem("oslDiagnosticoRespostas") || "[]");
+      if(Array.isArray(saved) && saved.length === 28){
+        saved.forEach((value,index) => {
+          const input = form.querySelector('input[name="q' + (index+1) + '"][value="' + value + '"]');
+          if(input) input.checked = true;
+        });
+      }
+    }catch(e){}
 
     updateUI();
   </script>
