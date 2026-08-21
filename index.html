@@ -236,6 +236,15 @@
     .reflectionList li{margin-bottom:10px}
     .resultCode{font-family:monospace;font-size:15px;font-weight:900;background:#f6f3f7;padding:8px 12px;border-radius:10px;display:inline-block}
     .resultNotice{font-size:14px!important;background:#f7f5f8;padding:16px;border-radius:16px}
+    .intensityGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .intensityCard{border:1px solid rgba(255,79,184,.22);border-radius:18px;padding:18px}
+    .intensityCard b{display:block;font-size:20px;margin-bottom:5px}
+    .intensityBadge{display:inline-block;background:var(--soft);color:var(--red);font-size:12px;font-weight:950;text-transform:uppercase;padding:7px 10px;border-radius:999px;margin-bottom:9px}
+    .diagnosticTable{width:100%;border-collapse:separate;border-spacing:0;font-size:15px;margin-top:14px;overflow:hidden;border:1px solid rgba(21,17,29,.10);border-radius:16px}
+    .diagnosticTable th,.diagnosticTable td{text-align:left;vertical-align:top;padding:13px;border-bottom:1px solid rgba(21,17,29,.08)}
+    .diagnosticTable th{background:#f7f4f8;color:var(--dark)}
+    .diagnosticTable tr:last-child td{border-bottom:0}
+    .evidenceBox{background:#fff;border-left:4px solid var(--pink);padding:14px 16px;border-radius:0 14px 14px 0;margin:12px 0}
 
     .actions{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 
@@ -278,6 +287,9 @@
       .actions{flex-direction:column;align-items:stretch}
       .btn{width:100%}
       .resultPlaces{grid-template-columns:1fr}
+      .intensityGrid{grid-template-columns:1fr}
+      .diagnosticTable{font-size:13px}
+      .diagnosticTable th,.diagnosticTable td{padding:10px 8px}
     }
 
     @media print{
@@ -576,6 +588,64 @@
       "Lugar de criança|Fuga":"Quando sente medo, você se fecha e cria respostas sozinho. A Fuga impede que a necessidade seja comunicada e acolhida."
     };
 
+    const PROTECTION_MAP = {
+      "Distância silenciosa":[
+        ["Sofrer menos com a falta de reciprocidade","Diminuir expectativas e aproximação","O casal aprende a conviver sem encontro emocional"],
+        ["Descobrir se o outro também sente falta","Parar de procurar como teste","Os dois ficam esperando um movimento"],
+        ["Evitar uma nova decepção","Não mostrar o que ainda precisa","Sua necessidade se torna invisível"]
+      ],
+      "Defesa e reatividade":[
+        ["Proteger seu valor e sua intenção","Explicar ou rebater antes de acolher","O parceiro sente que não foi ouvido"],
+        ["Evitar ser culpado por tudo","Trazer imediatamente a parte do outro","A conversa vira disputa"],
+        ["Não ser diminuído","Aumentar o tom ou justificar","A segurança emocional desaparece"]
+      ],
+      "Desequilíbrio de troca":[
+        ["Garantir que a relação funcione","Assumir mais do que sua parte","O parceiro participa cada vez menos"],
+        ["Receber reconhecimento","Entregar sem comunicar o custo","O cuidado vira ressentimento"],
+        ["Evitar conflito e desorganização","Ceder ou resolver sozinho","O desequilíbrio se torna permanente"]
+      ],
+      "Pai ou mãe do parceiro":[
+        ["Evitar que algo dê errado","Orientar, corrigir ou supervisionar","O parceiro perde autonomia ou resiste"],
+        ["Sentir segurança","Controlar a forma e o tempo do outro","A relação perde igualdade"],
+        ["Ter alguém responsável ao seu lado","Assumir antes que o outro faça","Você confirma que tudo depende de você"]
+      ],
+      "Salvador(a)":[
+        ["Impedir que o parceiro sofra","Resolver ou evitar consequências","O outro não desenvolve a própria resposta"],
+        ["Preservar o vínculo","Estar disponível além do limite","Você se abandona para manter o outro bem"],
+        ["Sentir que possui valor","Tornar-se indispensável","Amor e utilidade começam a se confundir"]
+      ],
+      "Fuga":[
+        ["Evitar uma discussão","Não falar ou adiar","O problema permanece entre vocês"],
+        ["Proteger-se de uma resposta dolorosa","Afastar-se emocionalmente","O parceiro interpreta como frieza"],
+        ["Não piorar a situação","Pedir tempo sem retomar","A pausa se transforma em abandono do assunto"]
+      ],
+      "Lugar de criança":[
+        ["Confirmar que ainda é amado","Pedir provas ou testar o parceiro","A segurança dura pouco e a pressão aumenta"],
+        ["Evitar rejeição","Adaptar-se e esconder limites","Você se abandona para preservar o vínculo"],
+        ["Impedir uma perda","Controlar, cobrar ou vigiar","O parceiro se afasta e confirma seu medo"]
+      ]
+    };
+
+    const PARTNER_RESPONSIBILITY = {
+      "Distância silenciosa":"demonstrar iniciativa, presença e disposição real para reconstruir a conexão",
+      "Defesa e reatividade":"escutar sem minimizar, reconhecer impactos e conversar sem transformar tudo em ataque",
+      "Desequilíbrio de troca":"assumir responsabilidades e participar ativamente da sustentação do vínculo",
+      "Pai ou mãe do parceiro":"ocupar o próprio lugar de adulto e responder pelas escolhas e compromissos",
+      "Salvador(a)":"assumir as próprias dificuldades e não transformar seu cuidado em obrigação",
+      "Fuga":"respeitar pausas, mas também participar da retomada e conclusão das conversas",
+      "Lugar de criança":"oferecer clareza e segurança sem aceitar testes, controle ou dependência emocional"
+    };
+
+    const CONVERSATION_SCRIPT = {
+      "Distância silenciosa":"Eu percebi que estamos funcionando para resolver a vida, mas nos encontrando cada vez menos como casal. Não quero procurar culpados. Quero entender se você também percebe essa distância e se existe disposição dos dois para cuidar do que está acontecendo entre nós.",
+      "Defesa e reatividade":"Eu quero falar sem transformar esta conversa numa disputa. Antes de explicar meu lado, quero compreender como você viveu essa situação. Depois, também preciso que exista espaço para mostrar o que aconteceu comigo.",
+      "Desequilíbrio de troca":"Eu percebi que tenho assumido mais do que consigo sustentar e isso está produzindo cansaço e distância. Não quero apresentar uma lista de cobranças. Quero que nós reconheçamos o que pertence a cada um e reorganizemos essa troca.",
+      "Pai ou mãe do parceiro":"Eu não quero continuar lembrando, corrigindo ou conduzindo tudo. Preciso voltar a enxergar você como meu parceiro e sentir que existe outro adulto assumindo responsabilidades ao meu lado.",
+      "Salvador(a)":"Eu me importo com você e quero continuar ao seu lado. Mas percebi que estou assumindo situações que pertencem a você. Posso apoiar, mas não posso resolver tudo no seu lugar sem continuar me abandonando.",
+      "Fuga":"Eu tenho evitado esta conversa porque sinto medo de piorar as coisas. Mas também percebo que meu silêncio está nos afastando. Quero falar com calma, mostrar o que acontece comigo e continuar presente.",
+      "Lugar de criança":"Quando percebo mudanças entre nós, sinto insegurança e começo a reagir a partir do medo. Eu sei que esse sentimento também toca minha história, mas quero entender o que está acontecendo sem criar respostas sozinho."
+    };
+
     let primeiraRespostaRegistrada = false;
     let diagnosticoConcluidoRegistrado = false;
     let whatsappRegistrado = false;
@@ -748,6 +818,29 @@ Quero aprofundar a compreensão do meu resultado.`;
       return '<ul class="' + cls + '">' + items.map(item => "<li>" + item + "</li>").join("") + "</ul>";
     }
 
+    function yesQuestionsFor(place){
+      return allQuestions.filter((item,index) => {
+        const chosen = form.querySelector('input[name="q' + (index+1) + '"]:checked');
+        return item.block === place && chosen && chosen.value === "SIM";
+      }).map(item => item.question);
+    }
+
+    function intensityInfo(score){
+      if(score >= 4) return {label:"Intensidade alta",text:"Este lugar apareceu nas quatro situações avaliadas. Ele não está restrito a um momento isolado; já influencia diferentes áreas da relação."};
+      if(score === 3) return {label:"Presença frequente",text:"Este lugar apareceu em três situações. Ele se torna uma resposta frequente quando o relacionamento exige conversa, aproximação ou responsabilidade."};
+      if(score === 2) return {label:"Presença moderada",text:"Este lugar aparece em situações específicas e já participa do ciclo emocional, mesmo sem conduzir todos os momentos da relação."};
+      if(score === 1) return {label:"Movimento pontual",text:"Este lugar surgiu de forma pontual. Ele merece atenção, mas não conduz seu resultado com a mesma força dos lugares principais."};
+      return {label:"Não identificado",text:"Este lugar não apareceu nas situações avaliadas."};
+    }
+
+    function tableHTML(rows,headers){
+      return '<table class="diagnosticTable"><thead><tr>' +
+        headers.map(h => "<th>" + h + "</th>").join("") +
+        '</tr></thead><tbody>' +
+        rows.map(row => "<tr>" + row.map(cell => "<td>" + cell + "</td>").join("") + "</tr>").join("") +
+        "</tbody></table>";
+    }
+
     function combinationCycle(primary,secondary){
       const p = PLACE_DETAILS[primary];
       const s = PLACE_DETAILS[secondary];
@@ -802,8 +895,41 @@ Quero aprofundar a compreensão do meu resultado.`;
         const tieNote = hasSecondary && dominant.secundarioPontuacao === dominant.principalPontuacao
           ? '<p><strong>Importante:</strong> os dois lugares receberam a mesma pontuação. A ordem organiza a leitura, mas ambos possuem força equivalente no seu resultado.</p>'
           : "";
+        const primaryEvidence = yesQuestionsFor(dominant.principal);
+        const secondaryEvidence = hasSecondary ? yesQuestionsFor(dominant.secundario) : [];
+        const primaryIntensity = intensityInfo(dominant.principalPontuacao);
+        const secondaryIntensity = intensityInfo(dominant.secundarioPontuacao);
+        const protectionRows = PROTECTION_MAP[dominant.principal] || [];
+        const responsibilities = [
+          ["Reconhecer e comunicar o que sente antes que a proteção assuma o controle",PARTNER_RESPONSIBILITY[dominant.principal]],
+          ["Não usar silêncio, excesso de entrega, controle ou cobrança como teste","mostrar por atitudes que cuidar do vínculo também é responsabilidade dele"],
+          ["Observar seus limites e sustentar aquilo que foi comunicado","respeitar seus limites e assumir a consequência das próprias escolhas"]
+        ];
+        const partnerSigns = [
+          "Existe abertura para escutar sem minimizar aquilo que você sente",
+          "O parceiro reconhece alguma responsabilidade sem devolver tudo imediatamente para você",
+          "A aproximação e as mudanças práticas começam a partir dos dois lados",
+          "Você consegue se posicionar sem receber punição emocional, desprezo ou silêncio"
+        ];
+        const sevenDayPlan = [
+          "<strong>Dia 1 — Observe:</strong> reconheça o momento exato em que o Lugar de " + dominant.principal + " começa a conduzir sua reação.",
+          "<strong>Dia 2 — Separe:</strong> escreva o que realmente aconteceu e, em outra linha, aquilo que você interpretou.",
+          "<strong>Dia 3 — Reconheça a proteção:</strong> identifique o que você teme sentir ou perder quando " + (hasSecondary ? "entra no Lugar de " + dominant.secundario : "esse movimento emocional aparece") + ".",
+          "<strong>Dia 4 — Dê nome à necessidade:</strong> complete a frase: “O que eu realmente preciso que meu parceiro compreenda é...”",
+          "<strong>Dia 5 — Defina seu limite:</strong> reconheça aquilo que você não consegue mais continuar fazendo, aceitando ou escondendo.",
+          "<strong>Dia 6 — Converse:</strong> utilize a escrita sugerida abaixo e fale sem transformar sua necessidade em acusação.",
+          "<strong>Dia 7 — Avalie o movimento:</strong> observe se existe escuta, responsabilidade e mudança prática dos dois lados."
+        ];
 
         document.getElementById("fullResult").innerHTML = tieNote +
+          '<div class="resultSection dark"><h4>A leitura central do seu resultado</h4><p>Você não está vivendo apenas o Lugar de ' + dominant.principal + '. Suas respostas mostram que esse movimento é sustentado pelo Lugar de ' + secondaryName + '.</p><p>' + pairInsight + '</p><p>' + detail.trying + '</p></div>' +
+          '<div class="resultSection"><h4>Por que este resultado apareceu</h4><p>Seu diagnóstico foi construído a partir das situações que você reconheceu na própria relação.</p>' +
+          '<div class="evidenceBox"><strong>' + dominant.principal + '</strong>' + listHTML(primaryEvidence.length ? primaryEvidence : ["Nenhuma situação específica marcada"]) + '</div>' +
+          (hasSecondary ? '<div class="evidenceBox"><strong>' + dominant.secundario + '</strong>' + listHTML(secondaryEvidence) + '</div>' : "") + '</div>' +
+          '<div class="resultSection"><h4>A intensidade dos seus lugares emocionais</h4><div class="intensityGrid">' +
+          '<div class="intensityCard"><span class="intensityBadge">' + primaryIntensity.label + '</span><b>' + dominant.principalPontuacao + ' de 4 — ' + dominant.principal + '</b><p>' + primaryIntensity.text + '</p></div>' +
+          '<div class="intensityCard"><span class="intensityBadge">' + secondaryIntensity.label + '</span><b>' + dominant.secundarioPontuacao + ' de 4 — ' + secondaryName + '</b><p>' + secondaryIntensity.text + '</p></div>' +
+          '</div></div>' +
           '<div class="resultSection"><h4>Seu lugar emocional principal</h4><p>' + content.intro + '</p></div>' +
           '<div class="resultSection"><h4>O que você sente vivendo desse lugar</h4><p>' + detail.feeling + '</p></div>' +
           '<div class="resultSection"><h4>Como isso aparece no relacionamento</h4><p>' + content.signs + '</p></div>' +
@@ -816,8 +942,15 @@ Quero aprofundar a compreensão do meu resultado.`;
           '<div class="resultSection highlight"><h4>O segundo lugar presente no seu resultado: ' + secondaryName + '</h4><p>' + secondaryText + '</p></div>' +
           '<div class="resultSection dark"><h4>Como os dois lugares funcionam juntos</h4><p><strong>' + dominant.principal + ' + ' + secondaryName + '</strong></p><p>' + pairInsight + '</p></div>' +
           '<div class="resultSection"><h4>O ciclo que se repete entre vocês</h4>' + listHTML(cycle,"cycleList") + '</div>' +
+          '<div class="resultSection"><h4>Intenção, proteção e consequência</h4><p>O seu movimento possui uma intenção emocional legítima. O problema é que a forma encontrada para se proteger produz uma consequência diferente daquela que você deseja.</p>' +
+          tableHTML(protectionRows,["O que você tenta proteger","O que acaba fazendo","O que isso produz"]) + '</div>' +
+          '<div class="resultSection"><h4>O que pertence a você e o que pertence ao parceiro</h4><p>O resultado explica o seu movimento, mas não coloca toda a responsabilidade sobre você. Uma relação é construída pelos movimentos dos dois.</p>' +
+          tableHTML(responsibilities,["Sua parte","Parte do parceiro"]) + '</div>' +
           '<div class="resultSection highlight"><h4>O primeiro movimento de reorganização</h4><p>' + content.step + '</p>' +
           (hasSecondary ? '<p>Esse movimento também exige reconhecer como o Lugar de ' + dominant.secundario + ' participa do ciclo, para não tentar mudar o resultado principal repetindo a mesma proteção.</p>' : "") + '</div>' +
+          '<div class="resultSection dark"><h4>Uma forma de iniciar essa conversa</h4><p>Você pode adaptar estas palavras para a sua realidade:</p><p><strong>“' + CONVERSATION_SCRIPT[dominant.principal] + '”</strong></p></div>' +
+          '<div class="resultSection"><h4>Seu plano inicial de sete dias</h4><p>O objetivo não é resolver toda a relação em uma semana. É interromper o funcionamento automático e observar se existe movimento real dos dois lados.</p>' + listHTML(sevenDayPlan,"cycleList") + '</div>' +
+          '<div class="resultSection"><h4>O que observar depois de se posicionar</h4><p>Não avalie apenas aquilo que o parceiro promete. Observe o movimento real da relação:</p>' + listHTML(partnerSigns) + '<p>Você consegue mudar a forma como ocupa o seu lugar. Mas não consegue produzir sozinho a reciprocidade do outro.</p></div>' +
           '<div class="resultSection"><h4>Perguntas para você observar</h4>' + listHTML(detail.questions,"resultList reflectionList") + '</div>' +
           '<div class="resultSection"><p class="resultNotice">Este resultado não determina o futuro do seu relacionamento e não procura apontar culpados. Ele mostra o lugar emocional de onde você está se relacionando hoje. Quando reconhece esse lugar, você deixa de reagir apenas ao comportamento do outro e começa a compreender aquilo que também acontece dentro de você.</p></div>' +
           '<div class="resultSection dark"><h4>Agora você consegue enxergar o que antes acontecia sem nome</h4><p>O lugar principal mostra onde você está. O segundo lugar mostra o que mantém esse movimento. A combinação dos dois revela o ciclo que precisa ser interrompido.</p><p>Clareza não resolve tudo sozinha, mas muda o ponto de onde você começa.</p></div>';
